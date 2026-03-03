@@ -15,16 +15,18 @@ export default function Home() {
       {/* INFO BANNER */}
       <section style={{
         background: '#4169E1',
-        padding: '20px 0',
+        padding: '12px 0',
         color: '#fff',
         fontSize: 14,
-        textAlign: 'center',
       }}>
-        <div className="container">
-          <div style={{ display: 'flex', justifyContent: 'center', gap: 30, flexWrap: 'wrap', alignItems: 'center' }}>
-            <span style={{ whiteSpace: 'nowrap' }}><strong>📞 Call Us/WhatsApp:</strong> <a href="tel:+447479811823" style={{ color: '#fff', textDecoration: 'underline' }}>04407344596</a></span>
-            <span style={{ whiteSpace: 'nowrap' }}><strong>✉️ Email Your Paper To:</strong> <a href="mailto:ijetrm@gmail.com" style={{ color: '#fff', textDecoration: 'underline' }}>ijetrm@gmail.com, editor@ijetrm.com</a></span>
-            <span style={{ whiteSpace: 'nowrap' }}><strong>⚡ Fast Publication</strong> International Journal With Highest Impact Factor</span>
+        <div className="marquee-banner">
+          <div className="marquee-content">
+            <span style={{ marginRight: '60px', display: 'inline-block' }}><strong>📞 Call Us/WhatsApp:</strong> <a href="tel:+447479811823" style={{ color: '#fff', textDecoration: 'underline' }}>04407344596</a></span>
+            <span style={{ marginRight: '60px', display: 'inline-block' }}><strong>✉️ Email Your Paper To:</strong> <a href="mailto:ijetrm@gmail.com" style={{ color: '#fff', textDecoration: 'underline' }}>ijetrm@gmail.com, editor@ijetrm.com</a></span>
+            <span style={{ marginRight: '60px', display: 'inline-block' }}><strong>⚡ Fast Publication</strong> International Journal With Highest Impact Factor</span>
+            <span style={{ marginRight: '60px', display: 'inline-block' }}><strong>📞 Call Us/WhatsApp:</strong> <a href="tel:+447479811823" style={{ color: '#fff', textDecoration: 'underline' }}>04407344596</a></span>
+            <span style={{ marginRight: '60px', display: 'inline-block' }}><strong>✉️ Email Your Paper To:</strong> <a href="mailto:ijetrm@gmail.com" style={{ color: '#fff', textDecoration: 'underline' }}>ijetrm@gmail.com, editor@ijetrm.com</a></span>
+            <span style={{ marginRight: '60px', display: 'inline-block' }}><strong>⚡ Fast Publication</strong> International Journal With Highest Impact Factor</span>
           </div>
         </div>
       </section>
