@@ -21,6 +21,9 @@ export default function Footer() {
                 <Link to={to} style={{ color: '#bbb', fontSize: 14, textDecoration: 'none' }}>{label}</Link>
               </div>
             ))}
+            <div style={{ marginBottom: 8, marginTop: 12 }}>
+              <Link to="/x7k-admin/login" style={{ color: '#bbb', fontSize: 14, textDecoration: 'none' }}>Are you an admin?</Link>
+            </div>
           </div>
           <div>
             <div style={{ color: '#F5C400', fontWeight: 600, fontSize: 13, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 12 }}>Contact</div>
@@ -38,8 +41,7 @@ export default function Footer() {
         </div>
         <div style={{ borderTop: '1px solid #222', paddingTop: 20, display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, fontSize: 12, color: '#555' }}>
           <span>© {new Date().getFullYear()} IJARST. All rights reserved.</span>
-          <span>ISSN: Pending Registration</span>
-        </div>
+          <span>ISSN: Pending Registration</span>          <span><Link to="/x7k-admin/login" style={{ color: '#bbb', fontSize: 12, textDecoration: 'underline' }}>Are you an admin?</Link></span>        </div>
       </div>
     </footer>
   );
