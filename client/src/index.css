@@ -141,6 +141,10 @@ input, textarea, select {
 
 .marquee-content {
   display: inline-block;
-  animation: marquee 15s linear infinite;
+  animation: marquee 30s linear infinite;
   padding-right: 50px;
+}
+
+.marquee-banner:hover .marquee-content {
+  animation-play-state: paused;
 }
