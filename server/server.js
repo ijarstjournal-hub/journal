@@ -17,7 +17,9 @@ app.use(cookieParser());
 const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
 app.use(cors({
   origin: clientUrl,
-  credentials: true
+  credentials: true,
+  allowedHeaders: ['Content-Type'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
 }));
 
 // Routes
