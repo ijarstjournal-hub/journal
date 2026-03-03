@@ -12,8 +12,11 @@ const app = express();
 // Middleware
 app.use(express.json());
 app.use(cookieParser());
+// allow requests from the frontend host (set via environment variable)
+// in development we default to localhost:3000
+const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' ? false : 'http://localhost:3000',
+  origin: clientUrl,
   credentials: true
 }));
 
