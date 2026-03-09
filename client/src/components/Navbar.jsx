@@ -18,7 +18,7 @@ const styles = {
     justifyContent: 'space-between',
     flexWrap: 'wrap',
     gap: 12,
-    height: 68,
+    minHeight: 68,
   },
   logo: {
     display: 'flex',
