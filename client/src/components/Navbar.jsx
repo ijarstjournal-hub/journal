@@ -16,6 +16,8 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: 12,
     height: 68,
   },
   logo: {
@@ -41,6 +43,7 @@ const styles = {
     display: 'flex',
     gap: 8,
     alignItems: 'center',
+    flexWrap: 'wrap',
   },
   link: (active) => ({
     color: active ? '#F5C400' : '#ccc',
@@ -86,9 +89,30 @@ const styles = {
 export default function Navbar() {
   const location = useLocation();
   const [open, setOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const isActive = (path) => location.pathname === path;
 
-  useEffect(() => setOpen(false), [location]);
+  useEffect(() => {
+    const updateMobile = () => setIsMobile(window.innerWidth <= 720);
+    updateMobile();
+    window.addEventListener('resize', updateMobile);
+    return () => window.removeEventListener('resize', updateMobile);
+  }, []);
+
+  useEffect(() => {
+    if (!isMobile) setOpen(true);
+    setMoreOpen(false);
+  }, [location, isMobile]);
+
+  const moreLinks = [
+    { to: '/open-access-policy', label: 'Open Access Policy' },
+    { to: '/peer-review-policy', label: 'Peer Review Policy' },
+    { to: '/plagiarism-policy', label: 'Plagiarism Policy' },
+    { to: '/authors-guide', label: 'Authors Guide' },
+    { to: '/aims-scope', label: 'Aims & Scope' },
+    { to: '/contact', label: 'Contact Us' },
+  ];
 
   return (
     <nav style={styles.nav}>
@@ -98,19 +122,57 @@ export default function Navbar() {
           <span style={styles.logoSub}>Int'l Journal of Advanced Research</span>
         </Link>
 
-        <div style={{ ...styles.links, display: open ? 'flex' : undefined }}
-          className="nav-links">
+        <div style={{ ...styles.links, display: isMobile && !open ? 'none' : 'flex' }} className="nav-links">
           <Link to="/" style={styles.link(isActive('/'))}>Home</Link>
           <Link to="/issues" style={styles.link(isActive('/issues'))}>Issues</Link>
           <Link to="/indexing" style={styles.link(isActive('/indexing'))}>Indexing</Link>
           <Link to="/editorial-team" style={styles.link(isActive('/editorial-team'))}>Editorial Team</Link>
           <Link to="/publication-ethics" style={styles.link(isActive('/publication-ethics'))}>Publication Ethics</Link>
-          <Link to="/open-access-policy" style={styles.link(isActive('/open-access-policy'))}>Open Access Policy</Link>
-          <Link to="/peer-review-policy" style={styles.link(isActive('/peer-review-policy'))}>Peer Review Policy</Link>
-          <Link to="/plagiarism-policy" style={styles.link(isActive('/plagiarism-policy'))}>Plagiarism Policy</Link>
-          <Link to="/authors-guide" style={styles.link(isActive('/authors-guide'))}>Authors Guide</Link>
-          <Link to="/aims-scope" style={styles.link(isActive('/aims-scope'))}>Aims & Scope</Link>
-          <Link to="/contact" style={styles.link(isActive('/contact'))}>Contact Us</Link>
+
+          <div style={{ position: 'relative' }}>
+            <button
+              type="button"
+              onClick={() => setMoreOpen(v => !v)}
+              style={{
+                ...styles.link(false),
+                padding: '6px 12px',
+                borderBottom: moreOpen ? '2px solid #F5C400' : '2px solid transparent',
+                background: 'none',
+              }}
+            >
+              More ▾
+            </button>
+            {moreOpen && (
+              <div style={{
+                position: 'absolute',
+                top: 40,
+                right: 0,
+                minWidth: 210,
+                background: '#0D0D0D',
+                border: '1px solid rgba(255,255,255,0.12)',
+                borderRadius: 6,
+                padding: 8,
+                boxShadow: '0 10px 24px rgba(0,0,0,0.35)',
+                zIndex: 200,
+              }}>
+                {moreLinks.map(link => (
+                  <Link
+                    key={link.to}
+                    to={link.to}
+                    style={{
+                      ...styles.link(isActive(link.to)),
+                      display: 'block',
+                      padding: '8px 12px',
+                    }}
+                    onClick={() => setMoreOpen(false)}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+
           <Link to="/submit" style={styles.submitBtn}>Submit Paper</Link>
         </div>
 
@@ -124,7 +186,15 @@ export default function Navbar() {
       </div>
 
       <style>{`
-        @media (max-width: 600px) {
+        @media (max-width: 900px) {
+          .nav-links a,
+          .nav-links button {
+            padding: 6px 10px !important;
+            font-size: 12px !important;
+          }
+        }
+
+        @media (max-width: 720px) {
           .nav-links {
             display: ${open ? 'flex' : 'none'} !important;
             flex-direction: column;
