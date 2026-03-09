@@ -101,7 +101,16 @@ export default function Navbar() {
         <div style={{ ...styles.links, display: open ? 'flex' : undefined }}
           className="nav-links">
           <Link to="/" style={styles.link(isActive('/'))}>Home</Link>
-          <Link to="/papers" style={styles.link(isActive('/papers'))}>Papers</Link>
+          <Link to="/issues" style={styles.link(isActive('/issues'))}>Issues</Link>
+          <Link to="/indexing" style={styles.link(isActive('/indexing'))}>Indexing</Link>
+          <Link to="/editorial-team" style={styles.link(isActive('/editorial-team'))}>Editorial Team</Link>
+          <Link to="/publication-ethics" style={styles.link(isActive('/publication-ethics'))}>Publication Ethics</Link>
+          <Link to="/open-access-policy" style={styles.link(isActive('/open-access-policy'))}>Open Access Policy</Link>
+          <Link to="/peer-review-policy" style={styles.link(isActive('/peer-review-policy'))}>Peer Review Policy</Link>
+          <Link to="/plagiarism-policy" style={styles.link(isActive('/plagiarism-policy'))}>Plagiarism Policy</Link>
+          <Link to="/authors-guide" style={styles.link(isActive('/authors-guide'))}>Authors Guide</Link>
+          <Link to="/aims-scope" style={styles.link(isActive('/aims-scope'))}>Aims & Scope</Link>
+          <Link to="/contact" style={styles.link(isActive('/contact'))}>Contact Us</Link>
           <Link to="/submit" style={styles.submitBtn}>Submit Paper</Link>
         </div>
 

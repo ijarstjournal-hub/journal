@@ -17,6 +17,7 @@ const paperSchema = new mongoose.Schema({
   issue: { type: String },
   publicationDate: { type: Date },
   published: { type: Boolean, default: false },
+  views: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now }
 });
 

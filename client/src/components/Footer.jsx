@@ -41,7 +41,7 @@ export default function Footer() {
         </div>
         <div style={{ borderTop: '1px solid #222', paddingTop: 20, display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, fontSize: 12, color: '#555' }}>
           <span>© {new Date().getFullYear()} IJARST. All rights reserved.</span>
-          <span>ISSN: Pending Registration</span>          <span><Link to="/x7k-admin/login" style={{ color: '#bbb', fontSize: 12, textDecoration: 'underline' }}>Are you an admin?</Link></span>        </div>
+          <span>ISSN: NULL</span>          <span><Link to="/x7k-admin/login" style={{ color: '#bbb', fontSize: 12, textDecoration: 'underline' }}>Are you an admin?</Link></span>        </div>
       </div>
     </footer>
   );

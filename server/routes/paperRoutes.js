@@ -24,10 +24,24 @@ router.get('/', async (req, res) => {
   }
 });
 
-// PUBLIC: Get single paper by ID
+// PUBLIC: Get most-viewed published paper
+router.get('/most-viewed', async (req, res) => {
+  try {
+    const paper = await Paper.findOne({ published: true }).sort({ views: -1 }).limit(1);
+    res.json(paper || null);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// PUBLIC: Get single paper by ID (also increments view count)
 router.get('/:id', async (req, res) => {
   try {
-    const paper = await Paper.findOne({ _id: req.params.id, published: true });
+    const paper = await Paper.findOneAndUpdate(
+      { _id: req.params.id, published: true },
+      { $inc: { views: 1 } },
+      { new: true }
+    );
     if (!paper) return res.status(404).json({ message: 'Paper not found' });
     res.json(paper);
   } catch (err) {

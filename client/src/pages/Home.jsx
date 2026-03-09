@@ -5,9 +5,11 @@ import PaperCard from '../components/PaperCard';
 
 export default function Home() {
   const [latestPapers, setLatestPapers] = useState([]);
+  const [mostViewed, setMostViewed] = useState(null);
 
   useEffect(() => {
     axios.get('/api/papers').then(res => setLatestPapers(res.data.slice(0, 3))).catch(() => {});
+    axios.get('/api/papers/most-viewed').then(res => setMostViewed(res.data)).catch(() => {});
   }, []);
 
   return (
@@ -21,12 +23,9 @@ export default function Home() {
       }}>
         <div className="marquee-banner">
           <div className="marquee-content">
-            <span style={{ marginRight: '60px', display: 'inline-block' }}><strong>📞 Call Us/WhatsApp:</strong> <a href="tel:+447479811823" style={{ color: '#0D0D0D', textDecoration: 'underline', fontWeight: 'bold' }}>04407344596</a></span>
-            <span style={{ marginRight: '60px', display: 'inline-block' }}><strong>✉️ Email Your Paper To:</strong> <a href="mailto:ijetrm@gmail.com" style={{ color: '#0D0D0D', textDecoration: 'underline', fontWeight: 'bold' }}>ijetrm@gmail.com, editor@ijetrm.com</a></span>
-            <span style={{ marginRight: '60px', display: 'inline-block' }}><strong>⚡ Fast Publication</strong> International Journal With Highest Impact Factor</span>
-            <span style={{ marginRight: '60px', display: 'inline-block' }}><strong>📞 Call Us/WhatsApp:</strong> <a href="tel:+447479811823" style={{ color: '#0D0D0D', textDecoration: 'underline', fontWeight: 'bold' }}>04407344596</a></span>
-            <span style={{ marginRight: '60px', display: 'inline-block' }}><strong>✉️ Email Your Paper To:</strong> <a href="mailto:ijetrm@gmail.com" style={{ color: '#0D0D0D', textDecoration: 'underline', fontWeight: 'bold' }}>ijetrm@gmail.com, editor@ijetrm.com</a></span>
-            <span style={{ marginRight: '60px', display: 'inline-block' }}><strong>⚡ Fast Publication</strong> International Journal With Highest Impact Factor</span>
+            <span style={{ marginRight: '60px', display: 'inline-block' }}><strong>📞 WhatsApp:</strong> <a href="https://wa.me/447479811823" style={{ color: '#0D0D0D', textDecoration: 'underline', fontWeight: 'bold' }}>+44 7479 811823</a></span>
+            <span style={{ marginRight: '60px', display: 'inline-block' }}><strong>✉️ Submissions & Inquiries:</strong> <a href="mailto:ijarstjournal@gmail.com" style={{ color: '#0D0D0D', textDecoration: 'underline', fontWeight: 'bold' }}>ijarstjournal@gmail.com</a></span>
+            <span style={{ marginRight: '60px', display: 'inline-block' }}><strong>⚡ Fast Publication</strong> — peer-reviewed international journal</span>
           </div>
         </div>
       </section>
@@ -76,7 +75,7 @@ export default function Home() {
             International Journal of Advanced Research in Science & Technology
           </h2>
           <p style={{ fontSize: 16, color: '#F5C400', marginBottom: 12, fontWeight: 600, letterSpacing: '0.05em' }}>
-            🇬🇧
+            🇬🇧 WE ARE FROM UK
           </p>
           <p style={{ fontSize: 18, color: '#bbb', maxWidth: 560, lineHeight: 1.7, marginBottom: 36 }}>
             IJARST is an open-access academic journal dedicated to publishing quality research across science, engineering, and technology disciplines.
@@ -100,6 +99,25 @@ export default function Home() {
             <span style={{ fontSize: 13, color: '#ddd' }}>
               <strong style={{ color: '#F5C400' }}>APC Notice:</strong> A $33 Article Processing Charge applies — payable only after acceptance.
             </span>
+          </div>
+        </div>
+      </section>
+
+      {/* INDEXING STATUS */}
+      <section className="section section-alt">
+        <div className="container">
+          <div style={{ maxWidth: 780, margin: '0 auto' }}>
+            <span className="badge badge-black" style={{ marginBottom: 16 }}>Indexing & Visibility</span>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, marginTop: 16 }}>
+              <div style={{ padding: 20, border: '1px solid rgba(0,0,0,0.08)', borderRadius: 10, background: '#fff' }}>
+                <h3 style={{ fontSize: 16, marginBottom: 10, color: '#0D0D0D' }}>Google Scholar</h3>
+                <p style={{ fontSize: 14, color: '#444' }}><strong>Status:</strong> Not available</p>
+              </div>
+              <div style={{ padding: 20, border: '1px solid rgba(0,0,0,0.08)', borderRadius: 10, background: '#fff' }}>
+                <h3 style={{ fontSize: 16, marginBottom: 10, color: '#0D0D0D' }}>ISSN</h3>
+                <p style={{ fontSize: 14, color: '#444' }}><strong>Number:</strong> NULL</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -137,6 +155,34 @@ export default function Home() {
           </div>
         </section>
       )}
+
+      {/* MOST VIEWED */}
+      <section className="section section-alt">
+        <div className="container">
+          <span className="badge badge-black" style={{ marginBottom: 16 }}>Most Viewed</span>
+          <h2 style={{ fontSize: 'clamp(22px, 3vw, 32px)', marginBottom: 20 }}>Most Viewed Paper</h2>
+          {mostViewed ? (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 16, maxWidth: 780 }}>
+              <div style={{ padding: 24, border: '1px solid rgba(0,0,0,0.08)', borderRadius: 10, background: '#fff' }}>
+                <h3 style={{ fontSize: 20, marginBottom: 10, color: '#0D0D0D' }}>{mostViewed.title}</h3>
+                <p style={{ color: '#555', lineHeight: 1.6, marginBottom: 12 }}>
+                  {mostViewed.authors?.map(a => a.name).join(', ') || 'Unknown authors'}
+                </p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+                  <Link to={`/papers/${mostViewed._id}`} className="btn btn-yellow">Read Paper</Link>
+                  {mostViewed.doi && (
+                    <a href={`https://doi.org/${mostViewed.doi}`} target="_blank" rel="noreferrer" className="btn btn-outline" style={{ padding: '8px 18px', fontSize: 12 }}>
+                      View DOI
+                    </a>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <p style={{ fontSize: 15, color: '#555' }}>No view statistics are available at this time.</p>
+          )}
+        </div>
+      </section>
 
       {/* EDITORIAL POLICY */}
       <section className="section section-alt">
