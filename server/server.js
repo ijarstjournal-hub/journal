@@ -12,14 +12,22 @@ const app = express();
 // Middleware
 app.use(express.json());
 app.use(cookieParser());
-// allow requests from the frontend host (set via environment variable)
+// allow requests from the frontend host(s) (set via environment variable)
 // in development we default to localhost:3000
-const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+const clientUrls = (process.env.CLIENT_URL || 'http://localhost:3000')
+  .split(',')
+  .map(u => u.trim())
+  .filter(Boolean);
+
 app.use(cors({
-  origin: clientUrl,
+  origin: (origin, callback) => {
+    // allow non-browser requests (like Postman) and same-origin requests
+    if (!origin || clientUrls.includes(origin)) return callback(null, true);
+    callback(new Error(`CORS policy: origin ${origin} is not allowed`));
+  },
   credentials: true,
   allowedHeaders: ['Content-Type'],
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
 }));
 
 // Routes
