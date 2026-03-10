@@ -75,7 +75,7 @@ export default function Home() {
             International Journal of Advanced Research in Science & Technology
           </h2>
           <p style={{ fontSize: 16, color: '#F5C400', marginBottom: 12, fontWeight: 600, letterSpacing: '0.05em' }}>
-            🇬🇧 WE ARE FROM UK
+            🇬🇧 
           </p>
           <p style={{ fontSize: 18, color: '#bbb', maxWidth: 560, lineHeight: 1.7, marginBottom: 36 }}>
             IJARST is an open-access academic journal dedicated to publishing quality research across science, engineering, and technology disciplines.
