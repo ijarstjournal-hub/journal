@@ -16,7 +16,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [papers, setPapers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState('list'); // list | form
+  const [view, setView] = useState('list');
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(EMPTY_PAPER);
   const [saving, setSaving] = useState(false);
@@ -57,7 +57,7 @@ export default function Dashboard() {
       keywords: Array.isArray(paper.keywords) ? paper.keywords.join(', ') : paper.keywords || '',
       publicationDate: paper.publicationDate ? new Date(paper.publicationDate).toISOString().split('T')[0] : '',
       authors: paper.authors?.length ? paper.authors : [{ name: '', affiliation: '', email: '' }],
-      pdfFileBuffer: '', // Clear buffer on edit - user must re-upload if changing PDF
+      pdfFileBuffer: '',
       pdfFileName: paper.pdfFile?.filename || '',
       pdfFileSize: paper.pdfFile?.size || 0,
     });
@@ -78,9 +78,10 @@ export default function Dashboard() {
   const handleTogglePublish = async (id) => {
     try {
       await axios.patch(`/api/papers/admin/${id}/publish`, {}, { withCredentials: true });
-      fetchPapers();
+      await fetchPapers();
+      setMsg('');
     } catch (err) {
-      setMsg('Error: ' + (err?.response?.data?.message || 'Failed to publish'));
+      setMsg('Error: ' + (err?.response?.data?.message || 'Failed to update publish status'));
     }
   };
 
@@ -97,12 +98,10 @@ export default function Dashboard() {
   const addAuthor = () => setForm(f => ({ ...f, authors: [...f.authors, { name: '', affiliation: '', email: '' }] }));
   const removeAuthor = (i) => setForm(f => ({ ...f, authors: f.authors.filter((_, idx) => idx !== i) }));
 
-  // Handle PDF file upload - convert to base64
   const handlePdfUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    // Validate file
     if (file.type !== 'application/pdf') {
       setMsg('Error: Only PDF files are allowed');
       return;
@@ -117,27 +116,23 @@ export default function Dashboard() {
     setUploadProgress(0);
     setMsg('');
 
-    // Convert file to base64
     const reader = new FileReader();
-    
+
     reader.onprogress = (event) => {
       if (event.lengthComputable) {
-        const percentCompleted = Math.round((event.loaded * 100) / event.total);
-        setUploadProgress(percentCompleted);
+        setUploadProgress(Math.round((event.loaded * 100) / event.total));
       }
     };
 
     reader.onload = () => {
-      const base64String = reader.result.split(',')[1]; // Remove data:application/pdf;base64, prefix
-      
+      const base64String = reader.result.split(',')[1];
       setForm(f => ({
         ...f,
-        pdfFileBuffer: base64String, // Store base64 string
+        pdfFileBuffer: base64String,
         pdfFileName: file.name,
         pdfFileSize: file.size
       }));
-
-      setMsg(`✓ PDF uploaded successfully (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
+      setMsg(`✓ PDF ready: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
       setUploading(false);
       setUploadProgress(0);
     };
@@ -156,8 +151,7 @@ export default function Dashboard() {
     setMsg('');
 
     try {
-      // Validate PDF is uploaded
-      if (!form.pdfFileBuffer) {
+      if (!editing && !form.pdfFileBuffer) {
         setMsg('Error: PDF file is required');
         setSaving(false);
         return;
@@ -165,18 +159,42 @@ export default function Dashboard() {
 
       const payload = {
         ...form,
-        keywords: typeof form.keywords === 'string' ? form.keywords.split(',').map(k => k.trim()).filter(Boolean) : form.keywords,
+        keywords: typeof form.keywords === 'string'
+          ? form.keywords.split(',').map(k => k.trim()).filter(Boolean)
+          : form.keywords,
       };
 
       if (editing) {
+        if (!form.pdfFileBuffer) {
+          delete payload.pdfFileBuffer;
+          delete payload.pdfFileName;
+          delete payload.pdfFileSize;
+        }
         await axios.put(`/api/papers/admin/${editing}`, payload, { withCredentials: true });
         setMsg('Paper updated successfully.');
+
+        if (form.published) {
+          try {
+            await axios.patch(`/api/papers/admin/${editing}/publish`, {}, { withCredentials: true });
+          } catch {}
+        }
       } else {
-        await axios.post('/api/papers/admin/create', payload, { withCredentials: true });
-        setMsg('Paper created successfully.');
+        const res = await axios.post('/api/papers/admin/create', payload, { withCredentials: true });
+        const newId = res.data.paper?._id;
+
+        if (form.published && newId) {
+          try {
+            await axios.patch(`/api/papers/admin/${newId}/publish`, {}, { withCredentials: true });
+            setMsg('Paper created and published successfully.');
+          } catch (pubErr) {
+            setMsg('Paper created but publish failed: ' + (pubErr?.response?.data?.message || 'Unknown error'));
+          }
+        } else {
+          setMsg('Paper created successfully.');
+        }
       }
 
-      fetchPapers();
+      await fetchPapers();
       setTimeout(() => { setView('list'); setMsg(''); }, 1500);
     } catch (err) {
       setMsg('Error: ' + (err?.response?.data?.message || 'Failed to save'));
@@ -192,11 +210,13 @@ export default function Dashboard() {
     marginBottom: 14, ...extra,
   });
 
-  const label = { color: '#aaa', fontSize: 12, display: 'block', marginBottom: 4, letterSpacing: '0.06em', textTransform: 'uppercase' };
+  const label = {
+    color: '#aaa', fontSize: 12, display: 'block',
+    marginBottom: 4, letterSpacing: '0.06em', textTransform: 'uppercase'
+  };
 
   return (
     <div style={{ minHeight: '100vh', background: '#0D0D0D', color: '#fff' }}>
-      {/* Top bar */}
       <div style={{ background: '#111', borderBottom: '2px solid #F5C400', padding: '0 24px', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <span style={{ fontFamily: "'Playfair Display', serif", color: '#F5C400', fontSize: 20, fontWeight: 700 }}>IJARST</span>
@@ -211,6 +231,12 @@ export default function Dashboard() {
       </div>
 
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 24px' }}>
+        {msg && view === 'list' && (
+          <div style={{ background: msg.startsWith('Error') ? '#2a0a0a' : '#0a2a0a', border: `1px solid ${msg.startsWith('Error') ? '#c00' : '#0a0'}`, color: msg.startsWith('Error') ? '#f88' : '#8f8', padding: '10px 14px', fontSize: 13, marginBottom: 20 }}>
+            {msg}
+          </div>
+        )}
+
         {view === 'list' ? (
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28 }}>
@@ -232,7 +258,7 @@ export default function Dashboard() {
                         {p.authors?.map(a => a.name).join(', ')} · Vol. {p.volume}, Issue {p.issue}
                       </div>
                       {p.doi && <div style={{ fontSize: 12, color: '#555', marginTop: 4 }}>DOI: {p.doi}</div>}
-                      {p.pdfFile && <div style={{ fontSize: 11, color: '#666', marginTop: 4 }}>📄 {(p.pdfFile.size / 1024 / 1024).toFixed(2)}MB</div>}
+                      {p.pdfFile?.size && <div style={{ fontSize: 11, color: '#666', marginTop: 4 }}>📄 {(p.pdfFile.size / 1024 / 1024).toFixed(2)}MB</div>}
                     </div>
                     <div style={{ display: 'flex', gap: 8, flexShrink: 0, alignItems: 'center', flexWrap: 'wrap' }}>
                       <span style={{ fontSize: 11, padding: '3px 8px', background: p.published ? '#1B5E20' : '#333', color: p.published ? '#afffaf' : '#aaa' }}>
@@ -287,8 +313,9 @@ export default function Dashboard() {
               <label style={label}>Publication Date</label>
               <input type="date" value={form.publicationDate} onChange={e => handleFormChange('publicationDate', e.target.value)} style={inp()} />
 
-              {/* PDF File Upload */}
-              <label style={label}>PDF File * (Max 10MB)</label>
+              <label style={label}>
+                PDF File {editing ? '(leave empty to keep existing)' : '*'} (Max 10MB)
+              </label>
               <div style={{ position: 'relative', marginBottom: 14 }}>
                 <input
                   type="file"
@@ -301,21 +328,22 @@ export default function Dashboard() {
                 <label
                   htmlFor="pdf-input"
                   style={{
-                    display: 'block',
-                    padding: '10px 12px',
-                    border: '2px dashed #444',
-                    background: '#111',
-                    color: '#aaa',
-                    fontSize: 14,
+                    display: 'block', padding: '10px 12px',
+                    border: '2px dashed #444', background: '#111',
+                    color: '#aaa', fontSize: 14,
                     cursor: uploading ? 'not-allowed' : 'pointer',
-                    textAlign: 'center',
-                    opacity: uploading ? 0.6 : 1,
-                    transition: 'all 0.3s'
+                    textAlign: 'center', opacity: uploading ? 0.6 : 1,
                   }}
                   onMouseEnter={e => { if (!uploading) e.currentTarget.style.borderColor = '#F5C400'; }}
                   onMouseLeave={e => { e.currentTarget.style.borderColor = '#444'; }}
                 >
-                  {uploading ? `Uploading... ${uploadProgress}%` : form.pdfFileName ? `✓ ${form.pdfFileName}` : '📁 Click to upload PDF or drag & drop'}
+                  {uploading
+                    ? `Uploading... ${uploadProgress}%`
+                    : form.pdfFileBuffer
+                      ? `✓ ${form.pdfFileName}`
+                      : editing && form.pdfFileName
+                        ? `Current: ${form.pdfFileName} — click to replace`
+                        : '📁 Click to upload PDF'}
                 </label>
               </div>
 
@@ -325,7 +353,6 @@ export default function Dashboard() {
               <label style={label}>Keywords (comma-separated)</label>
               <input value={form.keywords} onChange={e => handleFormChange('keywords', e.target.value)} style={inp()} placeholder="machine learning, neural networks, deep learning" />
 
-              {/* Authors */}
               <div style={{ marginBottom: 14 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                   <span style={label}>Authors</span>
