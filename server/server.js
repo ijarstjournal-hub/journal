@@ -3,8 +3,6 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
-const { GridFsStorage } = require('multer-gridfs-storage');
-const Grid = require('gridfs-stream');
 
 const adminRoutes = require('./routes/adminRoutes');
 const paperRoutes = require('./routes/paperRoutes');
@@ -33,27 +31,14 @@ app.use(cors({
 }));
 
 // MongoDB Connection
-let gfs;
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
     console.log('✅ MongoDB connected');
-    
-    // Initialize GridFS
-    const connection = mongoose.connection;
-    gfs = Grid(connection.db, mongoose.mongo);
-    gfs.collection('papers_uploads');
-    
   })
   .catch(err => {
     console.error('❌ MongoDB connection failed:', err.message);
     process.exit(1);
   });
-
-// Make GridFS available to routes
-app.use((req, res, next) => {
-  req.gfs = gfs;
-  next();
-});
 
 // Routes
 app.use('/api/admin', adminRoutes);
@@ -61,7 +46,10 @@ app.use('/api/papers', paperRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', mongodb: mongoose.connection.readyState === 1 });
+  res.json({ 
+    status: 'OK', 
+    mongodb: mongoose.connection.readyState === 1 
+  });
 });
 
 // Error handling middleware
