@@ -1,4 +1,10 @@
 {
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://journal-1-v0k5.onrender.com/api/:path*"
+    }
+  ],
   "redirects": [
     {
       "source": "/(.*)",
