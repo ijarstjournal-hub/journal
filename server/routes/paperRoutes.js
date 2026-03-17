@@ -4,7 +4,6 @@ const Paper = require('../models/Paper');
 const auth = require('../middleware/auth');
 const { generatePaperPdf } = require('../utils/pdfGenerator');
 
-// ADMIN routes FIRST (before dynamic :id routes)
 router.get('/admin/all', auth, async (req, res) => {
   try {
     const papers = await Paper.find()
@@ -51,11 +50,11 @@ router.post('/admin/create', auth, async (req, res) => {
     });
 
     await paper.save();
-    
+
     const paperData = paper.toObject();
     delete paperData.pdfFile.data;
     if (paperData.generatedPdf) delete paperData.generatedPdf.data;
-    
+
     res.status(201).json({ message: 'Paper created successfully', paper: paperData });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
@@ -71,7 +70,7 @@ router.put('/admin/:id', auth, async (req, res) => {
       if (typeof pdfFileBuffer === 'string') {
         pdfBuffer = Buffer.from(pdfFileBuffer, 'base64');
       }
-      
+
       updateData.pdfFile = {
         data: pdfBuffer,
         filename: pdfFileName,
@@ -82,7 +81,7 @@ router.put('/admin/:id', auth, async (req, res) => {
 
     const paper = await Paper.findByIdAndUpdate(req.params.id, updateData, { new: true })
       .select('-pdfFile.data -generatedPdf.data');
-    
+
     if (!paper) return res.status(404).json({ message: 'Paper not found' });
     res.json({ message: 'Paper updated successfully', paper });
   } catch (err) {
@@ -102,46 +101,39 @@ router.delete('/admin/:id', auth, async (req, res) => {
 
 router.patch('/admin/:id/publish', auth, async (req, res) => {
   try {
-    const paper = await Paper.findById(req.params.id);
+    const paper = await Paper.findById(req.params.id).select('-pdfFile.data -generatedPdf.data');
     if (!paper) return res.status(404).json({ message: 'Paper not found' });
 
     if (!paper.published) {
       try {
-        const pdfBuffer = await generatePaperPdf(paper);
-        
-        paper.published = true;
-        paper.generatedPdf = {
-          data: pdfBuffer,
-          filename: `${paper._id}_ijarst.pdf`,
-          size: pdfBuffer.length,
-          generatedAt: new Date()
-        };
-        await paper.save();
-        
-        const paperData = paper.toObject();
-        delete paperData.pdfFile.data;
-        delete paperData.generatedPdf.data;
-        
-        res.json({ message: 'Paper published successfully', published: true, paper: paperData });
+        const fullPaper = await Paper.findById(req.params.id);
+        const pdfBuffer = await generatePaperPdf(fullPaper);
+
+        await Paper.findByIdAndUpdate(req.params.id, {
+          $set: {
+            published: true,
+            'generatedPdf.data': pdfBuffer,
+            'generatedPdf.filename': `${paper._id}_ijarst.pdf`,
+            'generatedPdf.size': pdfBuffer.length,
+            'generatedPdf.generatedAt': new Date()
+          }
+        });
+
+        res.json({ message: 'Paper published successfully', published: true });
       } catch (pdfErr) {
         res.status(500).json({ message: 'PDF generation failed', error: pdfErr.message });
       }
     } else {
-      paper.published = false;
-      await paper.save();
-      
-      const paperData = paper.toObject();
-      delete paperData.pdfFile?.data;
-      delete paperData.generatedPdf?.data;
-      
-      res.json({ message: 'Paper unpublished successfully', published: false, paper: paperData });
+      await Paper.findByIdAndUpdate(req.params.id, {
+        $set: { published: false }
+      });
+      res.json({ message: 'Paper unpublished successfully', published: false });
     }
   } catch (err) {
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error', error: err.message });
   }
 });
 
-// PUBLIC routes AFTER admin routes
 router.get('/', async (req, res) => {
   try {
     const { search } = req.query;
@@ -194,7 +186,6 @@ router.get('/:id/pdf', async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename="${filename || paper.title.replace(/\s+/g, '_')}.pdf"`);
     res.setHeader('Content-Length', pdfData.length);
     res.send(pdfData);
-
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
   }
@@ -207,7 +198,7 @@ router.get('/:id', async (req, res) => {
       { $inc: { views: 1 } },
       { new: true }
     ).select('-pdfFile.data -generatedPdf.data');
-    
+
     if (!paper) return res.status(404).json({ message: 'Paper not found' });
     res.json(paper);
   } catch (err) {
