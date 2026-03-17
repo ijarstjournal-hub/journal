@@ -11,15 +11,15 @@ const paperSchema = new mongoose.Schema({
     }
   ],
   keywords: [{ type: String }],
-  
-  // File storage (replacing pdfUrl) - stores original uploaded PDF
+
+  // Original uploaded PDF
   pdfFile: {
+    data: { type: Buffer },       // ← add this
     filename: String,
-    fileId: mongoose.Schema.Types.ObjectId, // GridFS file ID
     uploadedAt: Date,
-    size: Number // in bytes
+    size: Number
   },
-  
+
   doi: { type: String },
   volume: { type: String },
   issue: { type: String },
@@ -27,18 +27,19 @@ const paperSchema = new mongoose.Schema({
   published: { type: Boolean, default: false },
   views: { type: Number, default: 0 },
   downloads: { type: Number, default: 0 },
-  
-  // Generated professional PDF (created when published)
+
+  // Generated professional PDF (created on publish)
   generatedPdf: {
-    fileId: mongoose.Schema.Types.ObjectId,
+    data: { type: Buffer },       // ← add this
+    filename: String,             // ← add this
+    size: Number,                 // ← add this
     generatedAt: Date
   },
-  
+
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
 
-// Auto-generate DOI before save if not provided
 paperSchema.pre('save', function (next) {
   if (!this.doi && this.volume && this.issue) {
     const shortId = this._id.toString().slice(-6);
