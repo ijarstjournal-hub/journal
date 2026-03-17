@@ -1,0 +1,15 @@
+{
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "ijarst.vercel.app"
+        }
+      ],
+      "destination": "https://ijarst.uk/$1",
+      "permanent": true
+    }
+  ]
+}
