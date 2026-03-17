@@ -247,4 +247,3 @@ router.patch('/admin/:id/publish', auth, async (req, res) => {
 });
 
 module.exports = router;
-
