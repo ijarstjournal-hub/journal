@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 const EMPTY_PAPER = {
   title: '', abstract: '', keywords: '',
   volume: '', issue: '', publicationDate: '',
-  pdfFileId: '', pdfFileName: '', pdfFileSize: 0, // Changed from pdfUrl
+  pdfFileBuffer: '', pdfFileName: '', pdfFileSize: 0,
   authors: [{ name: '', affiliation: '', email: '' }],
   published: false,
 };
@@ -57,7 +57,7 @@ export default function Dashboard() {
       keywords: Array.isArray(paper.keywords) ? paper.keywords.join(', ') : paper.keywords || '',
       publicationDate: paper.publicationDate ? new Date(paper.publicationDate).toISOString().split('T')[0] : '',
       authors: paper.authors?.length ? paper.authors : [{ name: '', affiliation: '', email: '' }],
-      pdfFileId: paper.pdfFile?.fileId || '',
+      pdfFileBuffer: '', // Clear buffer on edit - user must re-upload if changing PDF
       pdfFileName: paper.pdfFile?.filename || '',
       pdfFileSize: paper.pdfFile?.size || 0,
     });
@@ -67,13 +67,21 @@ export default function Dashboard() {
 
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this paper?')) return;
-    await axios.delete(`/api/papers/admin/${id}`, { withCredentials: true });
-    fetchPapers();
+    try {
+      await axios.delete(`/api/papers/admin/${id}`, { withCredentials: true });
+      fetchPapers();
+    } catch (err) {
+      setMsg('Error: ' + (err?.response?.data?.message || 'Failed to delete'));
+    }
   };
 
   const handleTogglePublish = async (id) => {
-    await axios.patch(`/api/papers/admin/${id}/publish`, {}, { withCredentials: true });
-    fetchPapers();
+    try {
+      await axios.patch(`/api/papers/admin/${id}/publish`, {}, { withCredentials: true });
+      fetchPapers();
+    } catch (err) {
+      setMsg('Error: ' + (err?.response?.data?.message || 'Failed to publish'));
+    }
   };
 
   const handleFormChange = (field, value) => {
@@ -89,8 +97,8 @@ export default function Dashboard() {
   const addAuthor = () => setForm(f => ({ ...f, authors: [...f.authors, { name: '', affiliation: '', email: '' }] }));
   const removeAuthor = (i) => setForm(f => ({ ...f, authors: f.authors.filter((_, idx) => idx !== i) }));
 
-  // NEW: Handle PDF file upload
-  const handlePdfUpload = async (e) => {
+  // Handle PDF file upload - convert to base64
+  const handlePdfUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
@@ -109,35 +117,37 @@ export default function Dashboard() {
     setUploadProgress(0);
     setMsg('');
 
-    try {
-      const formData = new FormData();
-      formData.append('pdf', file);
+    // Convert file to base64
+    const reader = new FileReader();
+    
+    reader.onprogress = (event) => {
+      if (event.lengthComputable) {
+        const percentCompleted = Math.round((event.loaded * 100) / event.total);
+        setUploadProgress(percentCompleted);
+      }
+    };
 
-      const res = await axios.post('/api/papers/admin/upload', formData, {
-        withCredentials: true,
-        headers: { 'Content-Type': 'multipart/form-data' },
-        onUploadProgress: (progressEvent) => {
-          const percentCompleted = Math.round(
-            (progressEvent.loaded * 100) / progressEvent.total
-          );
-          setUploadProgress(percentCompleted);
-        }
-      });
-
+    reader.onload = () => {
+      const base64String = reader.result.split(',')[1]; // Remove data:application/pdf;base64, prefix
+      
       setForm(f => ({
         ...f,
-        pdfFileId: res.data.fileId,
-        pdfFileName: res.data.filename,
-        pdfFileSize: res.data.size
+        pdfFileBuffer: base64String, // Store base64 string
+        pdfFileName: file.name,
+        pdfFileSize: file.size
       }));
 
-      setMsg(`✓ PDF uploaded successfully (${(res.data.size / 1024 / 1024).toFixed(2)}MB)`);
-    } catch (err) {
-      setMsg('Error: ' + (err?.response?.data?.message || 'Failed to upload PDF'));
-    } finally {
+      setMsg(`✓ PDF uploaded successfully (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
       setUploading(false);
       setUploadProgress(0);
-    }
+    };
+
+    reader.onerror = () => {
+      setMsg('Error: Failed to read file');
+      setUploading(false);
+    };
+
+    reader.readAsDataURL(file);
   };
 
   const handleSubmit = async (e) => {
@@ -147,7 +157,7 @@ export default function Dashboard() {
 
     try {
       // Validate PDF is uploaded
-      if (!form.pdfFileId) {
+      if (!form.pdfFileBuffer) {
         setMsg('Error: PDF file is required');
         setSaving(false);
         return;
@@ -208,7 +218,9 @@ export default function Dashboard() {
               <button onClick={openNew} className="btn btn-yellow" style={{ fontSize: 13 }}>+ Add Paper</button>
             </div>
 
-            {loading ? <div className="spinner" /> : papers.length === 0 ? (
+            {loading ? (
+              <div className="spinner" />
+            ) : papers.length === 0 ? (
               <div style={{ textAlign: 'center', padding: 80, color: '#555' }}>No papers yet. Click "Add Paper" to get started.</div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -275,7 +287,7 @@ export default function Dashboard() {
               <label style={label}>Publication Date</label>
               <input type="date" value={form.publicationDate} onChange={e => handleFormChange('publicationDate', e.target.value)} style={inp()} />
 
-              {/* NEW: PDF File Upload (replacing PDF URL) */}
+              {/* PDF File Upload */}
               <label style={label}>PDF File * (Max 10MB)</label>
               <div style={{ position: 'relative', marginBottom: 14 }}>
                 <input
@@ -283,16 +295,7 @@ export default function Dashboard() {
                   accept=".pdf"
                   onChange={handlePdfUpload}
                   disabled={uploading}
-                  style={{
-                    display: 'none',
-                    width: '100%',
-                    padding: '10px 12px',
-                    border: '1px solid #333',
-                    background: '#1a1a1a',
-                    color: '#fff',
-                    fontSize: 14,
-                    cursor: 'pointer'
-                  }}
+                  style={{ display: 'none' }}
                   id="pdf-input"
                 />
                 <label
@@ -309,15 +312,15 @@ export default function Dashboard() {
                     opacity: uploading ? 0.6 : 1,
                     transition: 'all 0.3s'
                   }}
-                  onMouseEnter={e => { if (!uploading) e.target.style.borderColor = '#F5C400'; }}
-                  onMouseLeave={e => { e.target.style.borderColor = '#444'; }}
+                  onMouseEnter={e => { if (!uploading) e.currentTarget.style.borderColor = '#F5C400'; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = '#444'; }}
                 >
                   {uploading ? `Uploading... ${uploadProgress}%` : form.pdfFileName ? `✓ ${form.pdfFileName}` : '📁 Click to upload PDF or drag & drop'}
                 </label>
               </div>
 
               <label style={label}>DOI (auto-generated if left blank)</label>
-              <input value={form.doi} onChange={e => handleFormChange('doi', e.target.value)} style={inp()} placeholder="10.5678/ijarst.v…" />
+              <input value={form.doi || ''} onChange={e => handleFormChange('doi', e.target.value)} style={inp()} placeholder="10.5678/ijarst.v…" />
 
               <label style={label}>Keywords (comma-separated)</label>
               <input value={form.keywords} onChange={e => handleFormChange('keywords', e.target.value)} style={inp()} placeholder="machine learning, neural networks, deep learning" />
