@@ -93,16 +93,16 @@ async function generatePaperPdf(paper) {
       .text(`© ${new Date().getFullYear()} IJARST. All rights reserved.`, { align: 'center' })
       .text('https://ijarst.uk', { align: 'center' });
 
-    // End document
-    doc.end();
-
-    // Convert chunks to Buffer and return
+    // Attach listeners BEFORE calling end()
     return new Promise((resolve, reject) => {
       doc.on('finish', () => {
         const pdfBuffer = Buffer.concat(chunks);
         resolve(pdfBuffer);
       });
       doc.on('error', reject);
+      
+      // NOW call end()
+      doc.end();
     });
 
   } catch (error) {
