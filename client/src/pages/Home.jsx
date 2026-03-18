@@ -7,8 +7,10 @@ export default function Home() {
   const [latestPapers, setLatestPapers] = useState([]);
   const [mostViewed, setMostViewed] = useState(null);
 
-  useEffect(() => {
-    axios.get('/api/papers').then(res => setLatestPapers(res.data.slice(0, 3))).catch(() => {});
+  useEffect(() => {axios.get('/api/papers').then(res => {
+  const data = Array.isArray(res.data) ? res.data : res.data.papers || res.data.data || [];
+  setLatestPapers(data.slice(0, 3));
+}).catch(() => {});
     axios.get('/api/papers/most-viewed').then(res => setMostViewed(res.data)).catch(() => {});
   }, []);
 
