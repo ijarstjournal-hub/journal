@@ -3,25 +3,44 @@ import axios from 'axios';
 
 const AuthContext = createContext();
 
+const setAuthHeader = (token) => {
+  if (token) {
+    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    localStorage.setItem('adminToken', token);
+  } else {
+    delete axios.defaults.headers.common['Authorization'];
+    localStorage.removeItem('adminToken');
+  }
+};
+
 export const AuthProvider = ({ children }) => {
   const [admin, setAdmin] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    axios.get('/api/admin/me', { withCredentials: true })
-      .then(res => setAdmin(res.data))
-      .catch(() => setAdmin(null))
-      .finally(() => setLoading(false));
+    const token = localStorage.getItem('adminToken');
+    if (token) {
+      setAuthHeader(token);
+      axios.get('/api/admin/me')
+        .then(res => setAdmin(res.data))
+        .catch(() => {
+          setAuthHeader(null);
+          setAdmin(null);
+        })
+        .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
+    }
   }, []);
 
   const login = async (email, password) => {
-    await axios.post('/api/admin/login', { email, password }, { withCredentials: true });
-    const res = await axios.get('/api/admin/me', { withCredentials: true });
-    setAdmin(res.data);
+    const res = await axios.post('/api/admin/login', { email, password });
+    setAuthHeader(res.data.token);
+    setAdmin({ email: res.data.email });
   };
 
   const logout = async () => {
-    await axios.post('/api/admin/logout', {}, { withCredentials: true });
+    setAuthHeader(null);
     setAdmin(null);
   };
 
