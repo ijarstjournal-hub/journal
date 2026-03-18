@@ -1,21 +1,9 @@
 {
-  "rewrites": [
-    {
-      "source": "/api/:path*",
-      "destination": "https://journal-1-v0k5.onrender.com/api/:path*"
-    }
-  ],
   "redirects": [
     {
       "source": "/(.*)",
-      "has": [
-        {
-          "type": "host",
-          "value": "ijarst.vercel.app"
-        }
-      ],
-      "destination": "https://ijarst.uk/$1",
-      "permanent": true
+      "destination": "https://journal-1-v0k5.onrender.com/$1",
+      "permanent": false
     }
   ]
 }
