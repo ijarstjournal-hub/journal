@@ -25,16 +25,16 @@ export default function Dashboard() {
   const [uploadProgress, setUploadProgress] = useState(0);
 
   const fetchPapers = async () => {
-    setLoading(true);
-    try {
-      const res = await axios.get('/api/papers/admin/all', { withCredentials: true });
-      setPapers(res.data);
-    } catch {
-      setPapers([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  setLoading(true);
+  try {
+    const res = await axios.get('/api/papers/admin/all', { withCredentials: true });
+    setPapers(Array.isArray(res.data) ? res.data : res.data.papers || res.data.data || []);
+  } catch {
+    setPapers([]);
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => { fetchPapers(); }, []);
 
